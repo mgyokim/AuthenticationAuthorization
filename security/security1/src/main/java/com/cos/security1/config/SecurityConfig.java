@@ -19,8 +19,11 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableGlobalMethodSecurity(securedEnabled = true, prePostEnabled = true) // secured 어노테이션 활성화, preAuthorize, postAuthorize 어노테이션 활성화
 public class SecurityConfig {
 
-    @Autowired
-    private PrincipalOauth2UserService principalOauth2UserService;
+    private final PrincipalOauth2UserService principalOauth2UserService;
+
+    public SecurityConfig(PrincipalOauth2UserService principalOauth2UserService) {
+        this.principalOauth2UserService = principalOauth2UserService;
+    }
 
     /**
      * 순환 참조문제로 따로 클래스 만들어서 SecurityConfig -> PrincipalOauth2UserService -> CustomBCryptPasswordEncoder 로 구조를 변경함.
