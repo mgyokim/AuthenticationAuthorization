@@ -62,7 +62,7 @@ public class PrincipalOauth2UserService extends DefaultOAuth2UserService{
         String email = oAuth2UserInfo.getEmail();   // absdf@gmail.com
         String role = "ROLE_USER";
 
-        User userEntity = userRepository.findByUsername(username);// username이 일치하는 유저가 있는지.
+        User userEntity = userRepository.findByUsername(username).orElse(null);  // username이 일치하는 유저가 있는지.
 
         if (userEntity == null) {
             System.out.println(provider + " 로그인이 최초입니다.");

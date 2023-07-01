@@ -2,12 +2,18 @@ package com.cos.security1.config;
 
 import com.cos.security1.config.oauth.PrincipalOauth2UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.web.SecurityFilterChain;
 
 
@@ -55,5 +61,38 @@ public class SecurityConfig {
         return http.build();
     }
 
+    @Value("${cos.security.oauth2.client.registration.google.client-id}")
+    private String clientId;
+
+    @Value("${cos.security.oauth2.client.registration.google.client-secret}")
+    private String clientSecret;
+
+    @Bean
+    public ClientRegistrationRepository clientRegistrationRepository() {
+        // 구글 OAuth 클라이언트 등록 설정
+        ClientRegistration registration = googleClientRegistration(); // 메서드 호출로 구글 클라이언트 등록 가져오기
+
+        // InMemoryClientRegistrationRepository에 등록
+        InMemoryClientRegistrationRepository clientRegistrationRepository =
+                new InMemoryClientRegistrationRepository(registration);
+
+        return clientRegistrationRepository;
+    }
+
+    private ClientRegistration googleClientRegistration() {
+        return ClientRegistration.withRegistrationId("google")
+                .clientId(clientId)
+                .clientSecret(clientSecret)
+                .clientName("Google")
+                .clientAuthenticationMethod(ClientAuthenticationMethod.BASIC)
+                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+                .redirectUriTemplate("{baseUrl}/login/oauth2/code/{registrationId}")
+                .scope("openid", "profile", "email")
+                .authorizationUri("https://accounts.google.com/o/oauth2/auth")
+                .tokenUri("https://accounts.google.com/o/oauth2/token")
+                .userInfoUri("https://www.googleapis.com/oauth2/v3/userinfo")
+                .userNameAttributeName("email")
+                .build();
+    }
 }
 // /user/** 로 들어오면 인증이 필수

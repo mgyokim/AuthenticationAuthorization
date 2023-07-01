@@ -8,10 +8,15 @@ import com.cos.security1.service.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -26,9 +31,15 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ApiController {
 
+    @Value("${cos.key}")
+    private String cosKey;
+
     private final UserRepository userRepository;
 
     private final UserService userService;
+
+    private AuthenticationManager authenticationManager;
+
 
 //    @GetMapping("/auth/kakao/callback")
     public @ResponseBody String kakaoCallback_v1(String code) {   // Data 를 리턴해주는 컨트롤러 함수
@@ -208,32 +219,34 @@ public class ApiController {
 
         System.out.println("서버에 저장할 유저네임은 : " + kakaoProfile.getKakao_account().getEmail() + "_" + kakaoProfile.getId());
         System.out.println("서버에 저장할 이메일 : " + kakaoProfile.getKakao_account().getEmail());
-        UUID garbagePassword = UUID.randomUUID();
-        System.out.println("서버에 저장할 패스워드 : " + garbagePassword);
+        // UUID란 -> 중복되지 않는 어떤 특정 값을 만들어내는 알고리즘
+        System.out.println("서버에 저장할 패스워드 : " + cosKey);
 
         User kakaoUser = User.builder()
                 .username(kakaoProfile.getKakao_account().getEmail() + "_" + kakaoProfile.getId())
-                .password(garbagePassword.toString())
+                .password(cosKey)
                 .email(kakaoProfile.getKakao_account().getEmail())
                 .build();
 
         // 비가입자만 체크 해서 회원가입 처리
+        System.out.println(kakaoUser.getUsername());
         User originUser = userService.회원찾기(kakaoUser.getUsername());
 
         if (originUser == null) {
+            System.out.println("기존 회원이 아닙니다. 따라서 자동 회원가입을 진행합니다.");
             userService.회원가입(kakaoUser);
         }
 
+        System.out.println("자동 로그인을 진행합니다.");
         // 로그인 처리 -> 65강 54분 부터
-
-
-
-
+        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(kakaoUser, cosKey));
+        SecurityContextHolder.getContext().setAuthentication(authentication);   // 65강 1시간 12분
 
 
 //        return "카카오 인증 완료: 토큰요청에 대한 응답 : " + response;
 //        return "카카오 인증 완료: 토큰요청에 대한 응답 헤더: " + response.getHeaders();
 //        return "카카오 인증 완료: 토큰요청에 대한 응답 바디: " + response.getBody();
-        return "카카오 사용자 정보 요청 완료 : " + response2.getBody();
+//        return "카카오 사용자 정보 요청 완료 : " + response2.getBody();
+        return kakaoUser.getUsername();
     }
 }

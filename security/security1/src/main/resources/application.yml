@@ -26,6 +26,9 @@ spring:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
     show-sql: true
 
+cos:
+  key: cos1234
+
   security:
     oauth2:
       client:
