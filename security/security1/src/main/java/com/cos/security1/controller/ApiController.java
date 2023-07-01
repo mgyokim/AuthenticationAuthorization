@@ -1,6 +1,9 @@
 package com.cos.security1.controller;
 
+import com.cos.security1.model.OAuthToken;
 import com.cos.security1.repository.UserRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -56,8 +59,20 @@ public class ApiController {
                 String.class    // 응답받을 타입은 String 으로 지정
         );
 
-        return "카카오 인증 완료: 토큰요청에 대한 응답 : " + response;
+        // Gson, Json Simple, ObjectMapper
+        ObjectMapper objectMapper = new ObjectMapper();
+        OAuthToken oAuthToken = null;
+
+        try {
+            oAuthToken = objectMapper.readValue(response.getBody(), OAuthToken.class);  // Json 데이터를 자바로 처리하기 위해 자바 오브젝트로 바꿈.
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("카카오 엑세스 토큰 : " + oAuthToken.getAccess_token());
+
+//        return "카카오 인증 완료: 토큰요청에 대한 응답 : " + response;
 //        return "카카오 인증 완료: 토큰요청에 대한 응답 헤더: " + response.getHeaders();
-//        return "카카오 인증 완료: 토큰요청에 대한 응답 바디: " + response.getBody();
+        return "카카오 인증 완료: 토큰요청에 대한 응답 바디: " + response.getBody();
     }
 }
